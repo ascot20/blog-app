@@ -84,6 +84,29 @@ test('return bad request if title or url is empty', async () => {
   expect(response.body).toHaveLength(helper.blogs.length)
 })
 
+test('delete a blog with valid id', async () => {
+  const response = await api.get('/api/blogs')
+  const blogsAtStart = response.body
+  const blogToDelete = blogsAtStart[0]
+
+  await api.delete(`/api/blogs/${blogToDelete.id}`).expect(204)
+
+  const blogsAtEnd = await api.get('/api/blogs')
+
+  expect(blogsAtEnd.body).toHaveLength(helper.blogs.length - 1)
+})
+
+test('update a blog with a valid id', async () => {
+  const updatedBlog = {
+    title: 'React patterns',
+    author: 'Michael Chan',
+    url: 'https://reactpatterns.com/',
+    likes: 9
+  }
+
+  await api.put('/api/blogs/5a422a851b54a676234d17f7').send(updatedBlog).expect(200).expect('Content-Type', /application\/json/)
+})
+
 afterAll(async () => {
   await mongoose.connection.close()
 }, 100000)
