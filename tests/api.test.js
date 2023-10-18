@@ -1,6 +1,7 @@
 const app = require('../app')
 const supertest = require('supertest')
 const Blog = require('../models/blog')
+const User = require('../models/user')
 const mongoose = require('mongoose')
 const helper = require('./test_helper')
 
@@ -9,6 +10,7 @@ const api = supertest(app)
 beforeEach(async () => {
   await Blog.deleteMany({})
   await Blog.insertMany(helper.blogs)
+  await User.deleteMany({})
 }, 100000)
 
 test('blogs returned are json format', async () => {
@@ -105,6 +107,38 @@ test('update a blog with a valid id', async () => {
   }
 
   await api.put('/api/blogs/5a422a851b54a676234d17f7').send(updatedBlog).expect(200).expect('Content-Type', /application\/json/)
+})
+
+describe('test user creation', () => {
+  test('when username length is less than 3', async () => {
+    const user = {
+      username: 'as',
+      password: 'krodinger',
+      name: 'Schwarner'
+    }
+
+    await api.post('/api/users').send(user).expect(400).expect('Content-Type', /application\/json/)
+  })
+
+  test('when all inputs are valid', async () => {
+    const user = {
+      username: 'ascot',
+      password: 'krodinger',
+      name: 'Schwarner'
+    }
+
+    await api.post('/api/users').send(user).expect(201).expect('Content-Type', /application\/json/)
+  })
+
+  test('when password is less than 3', async () => {
+    const user = {
+      username: 'ascot',
+      password: 'kr',
+      name: 'Schwarner'
+    }
+
+    await api.post('/api/users').send(user).expect(400).expect('Content-Type', /application\/json/)
+  })
 })
 
 afterAll(async () => {
