@@ -8,9 +8,11 @@ const errorHandler = (err, req, res, next) => {
   logger.info(err.message)
 
   if (err.name === 'CastError') {
-    res.status(400).send({ error: 'malformatted id' })
+    return res.status(400).json({ error: 'malformatted id' })
   } else if (err.name === 'ValidationError') {
-    res.status(400).send({ error: err.message })
+    return res.status(400).json({ error: err.message })
+  } else if (err.name === 'JsonWebTokenError') {
+    return res.status(400).json({ error: err.message })
   }
   next(err)
 }
@@ -24,8 +26,20 @@ const requestLogger = (req, res, next) => {
   next()
 }
 
+const tokenExtractor = (req, res, next) => {
+  const authorization = req.get('Authorization')
+  if (authorization && authorization.startsWith('Bearer ')) {
+    const token = authorization.replace('Bearer ', '')
+    req.token = token
+  } else {
+    req.token = null
+  }
+  next()
+}
+
 module.exports = {
   unknownEndpoint,
   errorHandler,
-  requestLogger
+  requestLogger,
+  tokenExtractor
 }
