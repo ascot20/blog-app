@@ -14,7 +14,13 @@ blogRouter.post('/', async (req, res, next) => {
   if (!req.body.title || !req.body.url) {
     return res.status(400).end()
   }
-  const blog = new Blog({ ...req.body, likes: req.body.likes || 0 })
+  const blog = new Blog({
+    title: req.body.title,
+    author: req.body.author,
+    url: req.body.url,
+    likes: req.body.likes || 0,
+    userID: req.body.userId
+  })
 
   try {
     const response = await blog.save()
