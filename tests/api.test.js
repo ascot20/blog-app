@@ -6,11 +6,18 @@ const mongoose = require('mongoose')
 const helper = require('./test_helper')
 
 const api = supertest(app)
+const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6ImFzY290IiwiaWQiOiI2NTMxYTNmODZiZWMzZGMxMTgwOWRkNTAiLCJpYXQiOjE2OTc3NTIwNTd9.-Ydvs1elAMf7T4WFxlefgVTAnbG8VuCMPVeMzznZ7TA'
 
 beforeEach(async () => {
   await Blog.deleteMany({})
   await Blog.insertMany(helper.blogs)
   await User.deleteMany({})
+  const testUser = {
+    username: 'ascot',
+    password: 'ascot1621',
+    name: 'Daniel Otchere'
+  }
+  await api.post('/api/users').send(testUser)
 }, 100000)
 
 test('blogs returned are json format', async () => {
@@ -45,6 +52,7 @@ test('create a new blog', async () => {
   await api
     .post('/api/blogs')
     .send(newBlog)
+    .set({ Authorization: token })
     .expect(201)
     .expect('Content-Type', /application\/json/)
 
@@ -138,6 +146,19 @@ describe('test user creation', () => {
     }
 
     await api.post('/api/users').send(user).expect(400).expect('Content-Type', /application\/json/)
+  })
+})
+
+describe('test for login route', () => {
+  test('when username and password exist', async () => {
+    const testUserLogin = {
+      username: 'ascot',
+      password: 'ascot1621'
+    }
+
+    const response = await api.post('/api/login').send(testUserLogin).expect(200).expect('content-type', /application\/json/)
+
+    console.log(response.body.token)
   })
 })
 

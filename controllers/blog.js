@@ -32,10 +32,11 @@ blogRouter.post('/', async (req, res) => {
   const savedNote = await blog.save()
   user.blogs = user.blogs.concat(savedNote.id)
   await user.save()
-  res.status(201).json(savedNote)
+  const fetchSavedNote = await Blog.findById(savedNote.id).populate('user', { username: 1, name: 1 })
+  res.status(201).json(fetchSavedNote)
 })
 
-blogRouter.delete('/:id', async (req, res, next) => {
+blogRouter.delete('/:id', async (req, res) => {
   const id = req.params.id
   const decodedToken = jwt.verify(req.token, process.env.SECRET)
 
@@ -52,15 +53,25 @@ blogRouter.delete('/:id', async (req, res, next) => {
   res.status(401).end()
 })
 
-blogRouter.put('/:id', async (req, res, next) => {
-  const id = req.params.id
+blogRouter.put('/:id', async (req, res) => {
+  const blogID = req.params.id
   const body = req.body
-  try {
-    const result = await Blog.findByIdAndUpdate(id, body, { new: true })
-    res.status(200).json(result)
-  } catch (error) {
-    next(error)
+
+  const decodedToken = jwt.verify(req.token, process.env.SECRET)
+
+  if (!decodedToken.id) {
+    return res.status(401).json({ error: 'Invalid token' })
   }
+
+  const user = await User.findById(decodedToken.id)
+  const userBlogIDs = user.blogs.map(id => id.toString())
+
+  if (!userBlogIDs.includes(blogID)) {
+    return res.status(401).end()
+  }
+
+  const result = await Blog.findByIdAndUpdate(blogID, body, { new: true })
+  res.status(200).json(result)
 })
 
 module.exports = blogRouter
